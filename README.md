@@ -14,3 +14,6 @@ With `sudo clisw -s start` you set the speed to 45%, while with `sudo clisw -s s
 
 ## License
 Clisw is released under MIT License.
+
+## TO-DO
+Make program statefull
