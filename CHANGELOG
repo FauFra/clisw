@@ -1,0 +1,7 @@
+CHANGELOG 
+
+v1.0
+- The program now is statefull, when you exit it will automatically save the configuration
+- Added the version (sudo clisw -v)
+- Create a makefile for install/unistall the program
+- Minor bugfix

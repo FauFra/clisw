@@ -1,5 +1,4 @@
 #! /usr/bin/python3
-# version 0.1
 
 import os
 import re
@@ -12,6 +11,8 @@ from argparse import RawTextHelpFormatter
 EC_IO_FILE = '/sys/kernel/debug/ec/ec0/io'
 PC_CODE_FILE = '/etc/pc_code'
 CFG_FILE = '/etc/isw.conf'
+CLISW_CFG_FILE = '/etc/clisw.conf'
+VERSION = '1.0'
 
 list_cpu_temp = []
 list_cpu_fan_speed = []
@@ -50,10 +51,15 @@ def main():
                       help = 'Shortcut for set cpu_fan_speed_0:\n'
                               '|start -> 45\n'
                               '|stop -> 0')
+  parser.add_argument("-v", action='store_const', const=1, help = 'clisw version')
   args = parser.parse_args()
-  if args.s is not None:
+  
+  if args.v is not None:
+    print("Clisw version: "+str(VERSION))
     return None
-
+  elif args.s is not None:
+    return None
+  
   os.system('clear')
   print("Welcome to isw_cli\n")
   
@@ -83,7 +89,7 @@ def main():
         if value == 0:
           finish = True
         elif value == 1:
-          setting(list_cpu_fan_speed,list_cpu_temp,"cpu")
+         setting(list_cpu_fan_speed,list_cpu_temp,"cpu")
         elif value == 2:
           setting(list_gpu_fan_speed,list_gpu_temp,"gpu")      
       else:
@@ -92,11 +98,12 @@ def main():
       print("\n")
       finish = True
 
+  write_config(pc_code)
 
 # check if the program has root privileges
 def check_sudo():
   if os.geteuid() != 0:
-    exit("\nYou need to have root privileges.\nPlease try again, this time using 'sudo'.\n")
+    exit("[!] The program was not executed as root.\n[!] Please try again, this time using 'sudo'.")
 
 
 # read the code of pc (i.e. for MSI PS63 8SC is 16S2EMS1)
@@ -123,7 +130,7 @@ def read_name_file():
   
   return pc_code
 
-# read the code from
+# read the code from EC file
 def read_name_ec():
   ec = os.popen('od -A x -t x1z '+str(EC_IO_FILE)).read() #read ec
 
@@ -138,7 +145,12 @@ def read_name_ec():
 
 
 def read_config(pc_code):
-  with open(CFG_FILE) as cfgfile:
+  file = CFG_FILE
+  
+  if(os.path.exists(CLISW_CFG_FILE)):
+    file = CLISW_CFG_FILE
+
+  with open(file) as cfgfile:
     cfgp = configparser.ConfigParser()
     cfgp.read_file(cfgfile)
 
@@ -163,28 +175,25 @@ def read_config(pc_code):
       list_gpu_fan_speed.append([gpu_value,gpu_address])
 
 
-
 def setting(fan_speed_list,temp_list,component):
   parameter = ["0) Fan speed","1) Temperature","2) Go back"]
   
-  print("\nChoose which "+component+" parameter you want chage:")
-  for i in parameter:
-    print(i)
-
   finish = False
 
   while not finish:
+    print("\nChoose which "+component+" parameter you want chage:")
+    for i in parameter:
+      print(i)
+
     try:
       value = int(input("\nParameter: "))
     except ValueError:
       value = -1 
     if value >= 0 and value<len(parameter):
       if value == 0:
-        fan_speed_settings(fan_speed_list,component)
-        finish = True
+        finish = fan_speed_settings(fan_speed_list,component)
       elif value == 1:
-        temp_setting(temp_list,component)
-        finish = True
+        finish = temp_setting(temp_list,component)
       else:
         finish = True
         print('')
@@ -192,7 +201,7 @@ def setting(fan_speed_list,temp_list,component):
       print("Wrong input. Try again!")
 
 
-
+# Section for regulate the speed of the fans
 def fan_speed_settings(fan_speed_list,component):
   len_list = len(fan_speed_list)
 
@@ -231,12 +240,16 @@ def fan_speed_settings(fan_speed_list,component):
 
   if not go_back:
     address = fan_speed_list[index_value][1]
-    fan_speed_list[index_value][0] =  new_value
+    fan_speed_list[index_value][0] = str(new_value)
     # print("hai scelto "+str(address)+" col valore "+str(new_value)+"\n")
     bash = "isw -s "+str(address)+" "+str(new_value)
     subprocess.Popen(bash.split(),stdout=subprocess.DEVNULL)
+    return True
+  else: 
+    return False
 
 
+#Section for regulate the temperature
 def temp_setting(temp_list,component):
   len_list = len(temp_list)
 
@@ -265,20 +278,54 @@ def temp_setting(temp_list,component):
         except ValueError:
           new_value = -1
           
-        if new_value>=0 and new_value<=200:
+        if new_value>=0 and new_value<=100:
           ok = True
         else:
-          print("\nWrong input. Insert a value between 0 and 200.\nTry again!\n")
+          print("\nWrong input. Insert a value between 0 and 100.\nTry again!\n")
     else:
       print("\nWrong input. Insert a index between 0 and "+str(len_list)+"\nTry again!")
 
   if not go_back:
     address = temp_list[index_value][1]
-    temp_list[index_value][0] =  new_value
+    temp_list[index_value][0] = str(new_value)
     # print("hai scelto "+str(address)+" col valore "+str(new_value)+"\n")
     bash = "isw -s "+str(address)+" "+str(new_value)
     subprocess.Popen(bash.split(),stdout=subprocess.DEVNULL)
+    return True
+  else:
+    return False
 
+
+#Save the configuration
+def write_config(pc_code):
+  address_profile = 'address_profile'
+  mad = 'MSI_ADDRESS_DEFAULT'
+
+  cfgp = configparser.ConfigParser()
+  cfgp[pc_code] = {}
+  cfgp[mad] = {}
+  
+  cfgp[pc_code][address_profile] = mad
+
+  create_configparser(cfgp,pc_code,'cpu_temp_',list_cpu_temp,0)
+  create_configparser(cfgp,pc_code,'cpu_fan_speed_',list_cpu_fan_speed,0)
+  create_configparser(cfgp,pc_code,'gpu_temp_',list_gpu_temp,0)
+  create_configparser(cfgp,pc_code,'gpu_fan_speed_',list_gpu_fan_speed,0)
+
+  create_configparser(cfgp,mad,'cpu_temp_address_',list_cpu_temp,1)
+  create_configparser(cfgp,mad,'cpu_fan_speed_address_',list_cpu_fan_speed,1)
+  create_configparser(cfgp,mad,'gpu_temp_address_',list_gpu_temp,1)
+  create_configparser(cfgp,mad,'gpu_fan_speed_address_',list_gpu_fan_speed,1)
+
+  with open(CLISW_CFG_FILE,'w') as test:
+    cfgp.write(test)
+
+
+def create_configparser(parser,pc_code,strn,list,pos):
+  i=0
+  for value in list:
+    parser[pc_code][strn+str(i)] = value[pos]
+    i=i+1
 
 if __name__ == '__main__':
   main()
