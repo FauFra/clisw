@@ -12,7 +12,7 @@ This program is a easy way for change both fan speed and temperature range for b
 For installation you can use makefile.</br>
 After downloaded or cloned the repo, enter into the folder clisw from the terminal.
 
-**Installation**: `sudo make install`
+**Installation**: `sudo make install` </br>
 **Unistallation**: `sudo make unistall`
 
   
