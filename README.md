@@ -20,9 +20,7 @@ After downloaded or cloned the repo, enter into the folder clisw from the termin
 ## Launch
 
 For launch the program write on your terminal `sudo clisw` and it will appear the cli for change manually the settings.</br>
-
 There is also a shortcut for set quickly *cpu_fan_speed_0*.</br>
-
 With `sudo clisw -s start` you set the speed to 45%, while with `sudo clisw -s stop` you turn off the fan.</br>
 
 **REMEMBER**: Everytime you launch it, you have to grant <u>root privileges</u> (*sudo*).
