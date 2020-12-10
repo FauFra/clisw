@@ -1,13 +1,13 @@
 CLISW = clisw
 PC_CODE = pc_code
 CFG_FILE = clisw.conf
-.PHONY: install, unistall
+.PHONY: install, uninstall
 
 install:
 	@cp clisw /bin/$(CLISW)
 	@echo "Done"
 
-unistall:
+uninstall:
 	@rm -r /bin/$(CLISW)
 	@rm -r /etc/$(PC_CODE)
 	@rm -r /etc/$(CFG_FILE)

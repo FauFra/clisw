@@ -13,7 +13,7 @@ For installation you can use makefile.</br>
 After downloaded or cloned the repo, enter into the folder clisw from the terminal.
 
 **Installation**: `sudo make install` </br>
-**Unistallation**: `sudo make unistall`
+**Unistallation**: `sudo make uninstall`
 
   
 

@@ -12,7 +12,7 @@ EC_IO_FILE = '/sys/kernel/debug/ec/ec0/io'
 PC_CODE_FILE = '/etc/pc_code'
 CFG_FILE = '/etc/isw.conf'
 CLISW_CFG_FILE = '/etc/clisw.conf'
-VERSION = '1.0'
+VERSION = '1.1'
 
 list_cpu_temp = []
 list_cpu_fan_speed = []
@@ -61,7 +61,7 @@ def main():
     return None
   
   os.system('clear')
-  print("Welcome to isw_cli\n")
+  print("Welcome to clisw\n")
   
   pc_code = read_name()
   if pc_code is None:
